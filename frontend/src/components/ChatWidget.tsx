@@ -34,7 +34,7 @@ const ChatWidget: React.FC = () => {
 
   return (
     <>
-      <button className={styles.chatButton} onClick={toggleChat}>
+      <button className={styles.chatButton} onClick={toggleChat} >
         Chat
       </button>
       {isOpen && (

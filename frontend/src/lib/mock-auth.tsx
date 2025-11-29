@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 // 1. Create Context
 const SessionContext = createContext({
-  data: { user: { name: "Judge", hasGPU: undefined } }, // Undefined GPU triggers the modal
+  data: { user: { name: "Judge", hasGPU: undefined } },
   error: null
 });
 
@@ -20,8 +20,13 @@ export const useSession = () => {
   return useContext(SessionContext);
 };
 
-// 4. Export Client Helper
+// 4. Export Client Helper (FIXED STRUCTURE)
 export const createAuthClient = (config) => ({
-  signIn: async () => console.log("Mock Sign In"),
+  signIn: {
+    email: async ({ email, password }) => {
+      console.log(`Mock Signing in ${email}...`);
+      return { data: { token: "mock-token" }, error: null };
+    }
+  },
   signOut: async () => console.log("Mock Sign Out")
 });

@@ -2,7 +2,7 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background-color: #007bff;
+  background-color: #2e8555;
   color: white;
   border: none;
   border-radius: 50%;
@@ -78,7 +78,7 @@
 }
 
 .chatInput button {
-  background-color: #007bff;
+  background-color: #2e8555;
   color: white;
   border: none;
   border-radius: 5px;

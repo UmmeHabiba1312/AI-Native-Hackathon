@@ -76,3 +76,29 @@ async def chat_endpoint(req: ChatRequest):
     except Exception as e:
         print(f"Error: {e}")
         return {"response": f"Error processing request: {str(e)}"}
+
+# --- Add this Data Model ---
+class TranslateRequest(BaseModel):
+    text: str
+
+# --- Add this Endpoint ---
+@app.post("/translate")
+async def translate_endpoint(req: TranslateRequest):
+    try:
+        # System prompt for professional translation
+        system_prompt = "You are a professional technical translator. Translate the following text into Urdu. Keep technical terms (like ROS 2, Python, Node, GPU) in English. Output ONLY the Urdu translation."
+        
+        completion = await client.chat.completions.create(
+            model="gemini-2.0-flash",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": req.text}
+            ]
+        )
+        
+        translated_text = completion.choices[0].message.content
+        return {"translated_text": translated_text}
+
+    except Exception as e:
+        print(f"Translation Error: {e}")
+        return {"translated_text": "Error: Could not translate."}

@@ -11,32 +11,29 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Easy to Use',
+    title: 'Master Physical AI',
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Go beyond digital-only AI. Learn to build embodied intelligence that perceives the physical world, plans actions, and controls humanoid robots using ROS 2, Gazebo, and NVIDIA Isaac.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
+    title: 'Build the "Brains" & "Bodies"',
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Bridging the gap between software and hardware. Master the full stack: from high-fidelity simulation and synthetic data generation to deploying Vision-Language-Action (VLA) models on edge compute like NVIDIA Jetson.
       </>
     ),
   },
   {
-    title: 'Powered by React',
+    title: 'Project-Based Learning',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Apply your knowledge through hands-on modules. Design a robotic nervous system, create a digital twin, train an AI brain, and culminate in a capstone project: building an autonomous humanoid.
       </>
     ),
   },
