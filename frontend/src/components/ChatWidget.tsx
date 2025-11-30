@@ -52,7 +52,7 @@ const ChatWidget: React.FC = () => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Ask a question..."
+              placeholder="Ask a question...."
               disabled={loading}
             />
             <button type="submit" disabled={loading}>Send</button>
