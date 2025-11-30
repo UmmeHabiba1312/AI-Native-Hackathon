@@ -40,7 +40,7 @@ export default function TranslateButton() {
     const textToSend = originalText.substring(0, 1500) + "...";
 
     try {
-      const res = await fetch('http://localhost:8000/translate', {
+      const res = await fetch('https://ai-native-hackathon-backend.vercel.app/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: textToSend })

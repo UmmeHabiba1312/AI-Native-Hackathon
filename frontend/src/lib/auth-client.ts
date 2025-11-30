@@ -1,7 +1,7 @@
 import { createAuthClient } from "./mock-auth";
 
 const authClient = createAuthClient({
-  baseURL: "http://localhost:8000",
+  baseURL: "https://ai-native-hackathon-backend.vercel.app",
 });
 
 export default authClient;
