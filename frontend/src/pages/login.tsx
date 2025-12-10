@@ -1,30 +1,70 @@
 import React, { useState } from 'react';
 import Layout from '@theme/Layout';
 import { useHistory } from '@docusaurus/router';
-import authClient from "../lib/auth-client"; // Fixed Import
 
 export default function Login() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
   const history = useHistory();
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Use the client instance
-    await authClient.signIn.email({ email, password: "password" });
-    alert("Logged in successfully! (Hackathon Mock)");
-    localStorage.setItem("user_session", "active");
-    history.push('/'); // Redirect to Home
-    window.location.reload(); // Force refresh to trigger Onboarding Modal
+    const mode = isLogin ? 'login' : 'signup';
+    const body = isLogin ? { email, password } : { email, password, name };
+
+    try {
+      const response = await fetch(`https://ai-native-hackathon-backend.vercel.app/auth/${mode}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        if (!isLogin) {
+          localStorage.removeItem('has_seen_onboarding');
+        }
+        history.push('/');
+        window.location.reload();
+      } else {
+        alert(data.message || 'Authentication failed');
+      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      alert('An error occurred during authentication.');
+    }
   };
 
   return (
-    <Layout title="Login">
+    <Layout title="Auth">
       <div style={{
         display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh',
         flexDirection: 'column'
       }}>
-        <h1>Student Login</h1>
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '300px' }}>
+        <h1>{isLogin ? 'Student Login' : 'Student Sign Up'}</h1>
+        <button
+          onClick={() => setIsLogin(!isLogin)}
+          style={{ marginBottom: '1rem', padding: '8px 16px', borderRadius: '5px', border: '1px solid #ccc', cursor: 'pointer' }}
+        >
+          Switch to {isLogin ? 'Sign Up' : 'Login'}
+        </button>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '300px' }}>
+          {!isLogin && (
+            <input
+              type="text"
+              placeholder="Enter Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
+              required
+            />
+          )}
           <input
             type="email"
             placeholder="Enter Email"
@@ -36,6 +76,8 @@ export default function Login() {
           <input
             type="password"
             placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
             required
           />
@@ -46,7 +88,7 @@ export default function Login() {
               border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '1rem'
             }}
           >
-            Sign In
+            {isLogin ? 'Sign In' : 'Sign Up'}
           </button>
         </form>
       </div>

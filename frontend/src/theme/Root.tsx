@@ -3,6 +3,7 @@ import { useLocation } from '@docusaurus/router'; // Import location hook
 import { SessionProvider } from "../lib/mock-auth";
 import authClient from "../lib/auth-client";
 import TranslateButton from "../components/TranslateButton";
+import PersonalizeButton from "../components/PersonalizeButton";
 import ChatWidget from "../components/ChatWidget";
 import ReactDOM from 'react-dom';
 
@@ -31,32 +32,43 @@ export default function Root({children}) {
 
 // Self-contained component to handle DOM injection
 const NavbarInjector = () => {
-  const [container, setContainer] = useState<HTMLElement | null>(null);
+  const [translateContainer, setTranslateContainer] = useState<HTMLElement | null>(null);
+  const [personalizeContainer, setPersonalizeContainer] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    // Attempt to find or create the container
-    const prepareContainer = () => {
+    const prepareContainers = () => {
       const navbarRight = document.querySelector('.navbar__items--right');
       if (navbarRight) {
-        let el = document.getElementById('translate-btn-container');
-        if (!el) {
-          el = document.createElement('div');
-          el.id = 'translate-btn-container';
-          // Insert as first item in right navbar
-          navbarRight.insertBefore(el, navbarRight.firstChild);
+        // Translate Button Container
+        let translateEl = document.getElementById('translate-btn-container');
+        if (!translateEl) {
+          translateEl = document.createElement('div');
+          translateEl.id = 'translate-btn-container';
+          navbarRight.insertBefore(translateEl, navbarRight.firstChild);
         }
-        setContainer(el);
+        setTranslateContainer(translateEl);
+
+        // Personalize Button Container
+        let personalizeEl = document.getElementById('personalize-btn-container');
+        if (!personalizeEl) {
+          personalizeEl = document.createElement('div');
+          personalizeEl.id = 'personalize-btn-container';
+          // Insert after translate button container, or as first if translate is not there
+          navbarRight.insertBefore(personalizeEl, translateEl ? translateEl.nextSibling : navbarRight.firstChild);
+        }
+        setPersonalizeContainer(personalizeEl);
       }
     };
 
-    // Run immediately
-    prepareContainer();
-
-    // Retry strictly for safety (in case Navbar renders slowly)
-    const timer = setTimeout(prepareContainer, 50);
+    prepareContainers();
+    const timer = setTimeout(prepareContainers, 50);
     return () => clearTimeout(timer);
   }, []);
 
-  if (!container) return null;
-  return ReactDOM.createPortal(<TranslateButton />, container);
+  return (
+    <>
+      {translateContainer && ReactDOM.createPortal(<TranslateButton />, translateContainer)}
+      {personalizeContainer && ReactDOM.createPortal(<PersonalizeButton />, personalizeContainer)}
+    </>
+  );
 };

@@ -6,20 +6,28 @@ const OnboardingModal = () => {
   const { data: session } = useSession();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [pythonExperience, setPythonExperience] = useState('Beginner'); // Default to Beginner
 
   useEffect(() => {
-    // Check if logged in AND hasGPU is undefined (meaning not answered yet)
-    if (session?.user && session.user.hasGPU === undefined) {
-      setIsOpen(true);
+    // Check if logged in AND if onboarding is incomplete in localStorage
+    if (session?.user) {
+      const userContext = JSON.parse(localStorage.getItem('user_context') || '{}');
+      // Open if hasGPU or level are not set in localStorage
+      if (userContext.hasGPU === undefined || userContext.level === undefined) {
+        setIsOpen(true);
+      }
     }
   }, [session]);
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
-    // Simulate saving
-    alert("Preference Saved! (+50 Points Secured)");
-    setIsOpen(false);
+  const handleSavePreferences = (hasGPU: boolean) => {
+    const userContext = {
+      hasGPU,
+      level: pythonExperience,
+    };
+    localStorage.setItem('user_context', JSON.stringify(userContext));
+    setIsOpen(false); // Close modal after saving
   };
 
   return (
@@ -40,8 +48,8 @@ const OnboardingModal = () => {
             Do you have an NVIDIA GPU?
           </label>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={handleSave} style={{ flex: 1, padding: '8px', cursor: 'pointer' }}>Yes (RTX 4070+)</button>
-            <button onClick={handleSave} style={{ flex: 1, padding: '8px', cursor: 'pointer' }}>No (Cloud Only)</button>
+            <button onClick={() => handleSavePreferences(true)} style={{ flex: 1, padding: '8px', cursor: 'pointer' }}>Yes (RTX 4070+)</button>
+            <button onClick={() => handleSavePreferences(false)} style={{ flex: 1, padding: '8px', cursor: 'pointer' }}>No (Cloud Only)</button>
           </div>
         </div>
 
@@ -49,22 +57,16 @@ const OnboardingModal = () => {
           <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
             Python Experience?
           </label>
-          <select style={{ width: '100%', padding: '8px' }}>
+          <select
+            style={{ width: '100%', padding: '8px' }}
+            value={pythonExperience}
+            onChange={(e) => setPythonExperience(e.target.value)}
+          >
             <option>Beginner</option>
             <option>Intermediate</option>
             <option>Advanced</option>
           </select>
         </div>
-
-        <button
-          onClick={handleSave}
-          style={{
-            marginTop: '10px', padding: '10px 20px', backgroundColor: '#25c2a0',
-            color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', width: '100%'
-          }}
-        >
-          Save & Continue
-        </button>
       </div>
     </div>
   );

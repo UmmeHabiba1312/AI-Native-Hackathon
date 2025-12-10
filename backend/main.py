@@ -37,6 +37,13 @@ client = AsyncOpenAI(
 qdrant = QdrantClient(location=":memory:")
 
 # 6. Data Models
+users_db = {} # In-memory storage
+
+class AuthRequest(BaseModel):
+    email: str
+    password: str
+    name: str = None
+
 class ChatRequest(BaseModel):
     query: str
     context: str = ""
@@ -45,6 +52,20 @@ class ChatRequest(BaseModel):
 @app.get("/")
 def read_root():
     return {"message": "Physical AI Backend is Running"}
+
+@app.post("/auth/signup")
+async def signup(req: AuthRequest):
+    if req.email in users_db:
+        return {"status": "error", "message": "User exists"}
+    users_db[req.email] = req.dict()
+    return {"status": "success", "user": req.dict()}
+
+@app.post("/auth/login")
+async def login(req: AuthRequest):
+    user = users_db.get(req.email)
+    if not user or user['password'] != req.password:
+        return {"status": "error", "message": "Invalid credentials"}
+    return {"status": "success", "user": user}
 
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest):
@@ -81,6 +102,10 @@ async def chat_endpoint(req: ChatRequest):
 class TranslateRequest(BaseModel):
     text: str
 
+class PersonalizeRequest(BaseModel):
+    text: str
+    context: dict
+
 # --- Add this Endpoint ---
 @app.post("/translate")
 async def translate_endpoint(req: TranslateRequest):
@@ -103,4 +128,32 @@ async def translate_endpoint(req: TranslateRequest):
         print(f"Translation Error: {e}")
         return {"translated_text": "Error: Could not translate."}
 
-# done
+@app.post("/personalize")
+async def personalize_endpoint(req: PersonalizeRequest):
+    try:
+        has_gpu = req.context.get("hasGPU", False)
+        prompt_emphasis = ""
+        if has_gpu:
+            prompt_emphasis = "emphasize Local NVIDIA Isaac Sim."
+        else:
+            prompt_emphasis = "emphasize Cloud/Google Colab alternatives."
+
+        system_prompt = f"Rewrite this technical content. If hasGPU is false, {prompt_emphasis} If true, {prompt_emphasis}"
+        user_prompt = req.text
+
+        completion = await client.chat.completions.create(
+            model="gemini-2.0-flash",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
+        )
+
+        personalized_text = completion.choices[0].message.content
+        return {"personalized_text": personalized_text}
+
+    except Exception as e:
+        print(f"Personalization Error: {e}")
+        return {"personalized_text": "Error: Could not personalize."}
+=======
+# completed

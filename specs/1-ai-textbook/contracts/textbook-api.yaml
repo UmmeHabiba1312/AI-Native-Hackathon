@@ -1,0 +1,519 @@
+openapi: 3.0.0
+info:
+  title: AI-Native Textbook API
+  description: API for the Physical AI & Humanoid Robotics textbook platform
+  version: 1.0.0
+  contact:
+    name: Textbook Development Team
+    email: textbook@physical-ai.org
+
+servers:
+  - url: https://api.textbook.physical-ai.org/v1
+    description: Production server
+  - url: https://staging-api.textbook.physical-ai.org/v1
+    description: Staging server
+  - url: http://localhost:8000/v1
+    description: Development server
+
+paths:
+  /chapters:
+    get:
+      summary: List all textbook chapters
+      description: Retrieve a paginated list of all textbook chapters
+      parameters:
+        - name: module_id
+          in: query
+          description: Filter chapters by module ID
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Number of chapters to return
+          required: false
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          description: Number of chapters to skip
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of chapters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chapters:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Chapter'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /chapters/{chapterId}:
+    get:
+      summary: Get chapter content
+      description: Retrieve the content of a specific chapter
+      parameters:
+        - name: chapterId
+          in: path
+          required: true
+          description: Unique identifier of the chapter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Chapter content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chapter'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /chat:
+    post:
+      summary: Chat with textbook assistant
+      description: Send a message to the RAG-enabled chatbot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+                - user_id
+              properties:
+                message:
+                  type: string
+                  description: User's message/query
+                  example: "Explain ROS 2 nodes and topics"
+                user_id:
+                  type: string
+                  description: User identifier for personalization
+                  example: "user-12345"
+                context:
+                  type: string
+                  description: Optional context (chapter ID, etc.)
+                  example: "module1-ros2-intro"
+      responses:
+        '200':
+          description: Response from the chatbot
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - response
+                  - sources
+                properties:
+                  response:
+                    type: string
+                    description: The chatbot's response
+                  sources:
+                    type: array
+                    description: Source references from the textbook
+                    items:
+                      type: string
+                  context_used:
+                    type: array
+                    description: Context used for the response
+                    items:
+                      type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/{userId}/progress:
+    get:
+      summary: Get user progress
+      description: Retrieve the learning progress for a specific user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User's learning progress
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                  progress:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserProgress'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Update user progress
+      description: Update the learning progress for a specific user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: Unique identifier of the user
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProgress'
+      responses:
+        '200':
+          description: Updated user progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProgress'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /translate:
+    post:
+      summary: Translate content
+      description: Translate textbook content to Urdu or other supported languages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+                - target_language
+              properties:
+                text:
+                  type: string
+                  description: Text to translate
+                  example: "Introduction to ROS 2 and Robotic Nervous System"
+                target_language:
+                  type: string
+                  description: Target language code (e.g., ur, es, fr)
+                  example: "ur"
+                source_language:
+                  type: string
+                  description: Source language code (default: en)
+                  example: "en"
+      responses:
+        '200':
+          description: Translated content
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - translated_text
+                properties:
+                  translated_text:
+                    type: string
+                    description: The translated text
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    Chapter:
+      type: object
+      required:
+        - id
+        - title
+        - module_id
+        - content
+        - metadata
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the chapter
+        title:
+          type: string
+          description: Title of the chapter
+        module_id:
+          type: string
+          description: Reference to the parent module
+        content:
+          type: string
+          description: Markdown content of the chapter
+        learning_objectives:
+          type: array
+          description: List of learning objectives
+          items:
+            type: string
+        code_examples:
+          type: array
+          description: Code examples in the chapter
+          items:
+            $ref: '#/components/schemas/CodeExample'
+        diagrams:
+          type: array
+          description: Diagrams in the chapter
+          items:
+            $ref: '#/components/schemas/Diagram'
+        exercises:
+          type: array
+          description: Exercises associated with the chapter
+          items:
+            $ref: '#/components/schemas/Exercise'
+        metadata:
+          $ref: '#/components/schemas/ChapterMetadata'
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp of creation
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp of last update
+
+    ChapterMetadata:
+      type: object
+      properties:
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          description: Difficulty level of the chapter
+        estimated_time:
+          type: integer
+          description: Estimated time to complete in minutes
+        prerequisites:
+          type: array
+          items:
+            type: string
+          description: Prerequisite chapter IDs
+
+    CodeExample:
+      type: object
+      required:
+        - id
+        - language
+        - code
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the code example
+        language:
+          type: string
+          description: Programming language
+        platform:
+          type: string
+          description: Target platform (ros2, isaac, unity)
+        code:
+          type: string
+          description: The actual code content
+        description:
+          type: string
+          description: Description of what the code does
+
+    Diagram:
+      type: object
+      required:
+        - id
+        - title
+        - file_path
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the diagram
+        title:
+          type: string
+          description: Title of the diagram
+        description:
+          type: string
+          description: Description of the diagram
+        file_path:
+          type: string
+          description: Path to the diagram file
+        type:
+          type: string
+          description: Type of diagram
+
+    Exercise:
+      type: object
+      required:
+        - id
+        - type
+        - question
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the exercise
+        type:
+          type: string
+          enum: [coding, multiple_choice, essay]
+          description: Type of exercise
+        question:
+          type: string
+          description: The exercise question
+        solution:
+          type: string
+          description: The solution or answer
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          description: Difficulty level
+
+    UserProgress:
+      type: object
+      required:
+        - user_id
+        - chapter_id
+        - status
+      properties:
+        user_id:
+          type: string
+          description: Reference to the user
+        chapter_id:
+          type: string
+          description: Reference to the chapter
+        module_id:
+          type: string
+          description: Reference to the module
+        status:
+          type: string
+          enum: [not_started, in_progress, completed]
+          description: Status of the chapter for this user
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Percentage of completion
+        time_spent:
+          type: integer
+          description: Time spent in seconds
+        last_accessed:
+          type: string
+          format: date-time
+          description: Timestamp of last access
+        completed_at:
+          type: string
+          format: date-time
+          description: Timestamp of completion (if completed)
+        quiz_scores:
+          type: array
+          items:
+            type: object
+            properties:
+              quiz_id:
+                type: string
+              score:
+                type: number
+                format: float
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the user
+        email:
+          type: string
+          format: email
+          description: User's email address
+        name:
+          type: string
+          description: User's full name
+        profile:
+          type: object
+          properties:
+            background:
+              type: string
+              description: Software/hardware background
+            preferences:
+              type: object
+              properties:
+                language:
+                  type: string
+                  description: Preferred language
+                difficulty_level:
+                  type: string
+                  enum: [beginner, intermediate, advanced]
+                  description: Preferred difficulty level
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters or payload
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid input parameters"
+              code:
+                type: string
+                example: "BAD_REQUEST"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+              code:
+                type: string
+                example: "NOT_FOUND"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "An unexpected error occurred"
+              code:
+                type: string
+                example: "INTERNAL_ERROR"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

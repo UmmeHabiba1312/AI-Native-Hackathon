@@ -1,0 +1,8 @@
+{
+  "label": "Module 3: AI Brain & Control",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Building the AI brain for Physical AI humanoid robots with ROS 2, Isaac Sim, and advanced control systems."
+  }
+}
